@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { Monaco } from "@monaco-editor/react";
 import { LANGUAGE_CONFIG } from "@/app/(root)/_constants";
 import { CodeEditorState } from "./../types/index";
+import { output } from "framer-motion/client";
 
 // Function to get initial state safely (handles SSR)
 const getInitialState = () => {
@@ -81,24 +82,23 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
     runCode: async () => {
       const { language, getCode } = get();
       const code = getCode();
-      console.log(code)
       if (!code) {
-        set({ error: "Please enter some code" });
+        set({ error: "Please enter some code \nIf the problem persists, please reload the page." });
         return;
       }
-
+    
       const languageConfig = LANGUAGE_CONFIG[language];
       if (!languageConfig) {
         set({ error: "Invalid language selected" });
         return;
       }
-
+    
       set({ isRunning: true, error: null, output: "" });
-
+    
       try {
         const runtime = languageConfig.pistonRuntime;
         if (!runtime) throw new Error("Runtime not available");
-
+    
         const response = await fetch("https://emkc.org/api/v2/piston/execute", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -108,39 +108,48 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
             files: [{ content: code }],
           }),
         });
-
+    
         const data = await response.json();
-
+        console.log("Data : ", data);
+    
         // Handle API errors
         if (data.message) {
           set({ error: data.message, executionResult: { code, output: "", error: data.message } });
           return;
         }
-
-        // Handle compilation errors
-        if (data.compile?.code !== 0) {
-          const error = data.compile.stderr || data.compile.output;
+    
+        // Handle compilation errors only if compile data exists
+        if (data.compile && data.compile.code !== 0) {
+          const error = data.compile.stderr || data.compile.stdout || "Compilation failed";
           set({ error, executionResult: { code, output: "", error } });
           return;
         }
-
+    
         // Handle runtime errors
-        if (data.run?.code !== 0) {
-          const error = data.run.stderr || data.run.output;
+        if (!data.run || data.run.code !== 0) {
+          const error = data.run?.stderr || data.run?.stdout || "Unknown error occurred";
           set({ error, executionResult: { code, output: "", error } });
           return;
         }
-
+    
         // Successful execution
         set({
-          output: data.run.output.trim(),
+          output: data.run.stdout.trim(),
           error: null,
-          executionResult: { code, output: data.run.output.trim(), error: null },
+          executionResult: { code, output: data.run.stdout.trim(), error: null },
         });
-
+    
       } catch (error) {
         console.error("Error running code:", error);
-        set({ error: "Error running code", executionResult: { code, output: "", error: "Error running code" } });
+        const existingError = get().executionResult?.error;
+        set({
+          error: existingError || "Unexpected error occurred while running code",
+          executionResult: {
+            code,
+            output: "",
+            error: existingError || "Unexpected error occurred while running code",
+          },
+        });
       } finally {
         set({ isRunning: false });
       }

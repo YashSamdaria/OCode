@@ -10,21 +10,27 @@ import { api } from "../../../../convex/_generated/api";
 function RunButton() {
   const { user } = useUser();
   const { runCode, language, isRunning } = useCodeEditorStore();
-  // const saveExecution = useMutation(api.codeExecutions.saveExecution);
+  const saveExecution = useMutation(api.codeExecutions.saveExecution);
 
   const handleRun = async () => {
+    console.log(user)
 
+    if (!user) {
+      console.log(user)
+      alert("Please sign in to run the code.");
+      return;
+    }
     await runCode();
     const result = getExecutionResult();
 
 
     if (user && result) {
-      // await saveExecution({
-      //   language,
-      //   code: result.code,
-      //   output: result.output || undefined,
-      //   error: result.error || undefined,
-      // });
+      await saveExecution({
+        language,
+        code: result.code,
+        output: result.output || undefined,
+        error: result.error || undefined,
+      });
     }
   };
 
