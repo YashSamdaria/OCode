@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { Loader2, Play } from "lucide-react";
 import { api } from "../../../../convex/_generated/api";
 
+export const dynamic = "force-dynamic";
+
 function RunButton() {
   const { user } = useUser();
   const { runCode, language, isRunning } = useCodeEditorStore();

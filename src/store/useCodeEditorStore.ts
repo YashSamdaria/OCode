@@ -1,10 +1,9 @@
 import { create } from "zustand";
-import { Monaco } from "@monaco-editor/react";
 import { LANGUAGE_CONFIG } from "@/app/(root)/_constants";
-import { CodeEditorState } from "./../types/index";
-import { output } from "framer-motion/client";
+import { CodeEditorState } from "@/types/index";
+import * as monaco from "monaco-editor";
 
-// Function to get initial state safely (handles SSR)
+// SSR-safe initial state
 const getInitialState = () => {
   if (typeof window === "undefined") {
     return { language: "cpp", theme: "vs-dark", fontSize: 16 };
@@ -22,23 +21,17 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
 
   return {
     ...initialState,
-    output: "",
-    isRunning: false,
-    error: null,
     editor: null,
+    output: "",
+    error: null,
+    isRunning: false,
     executionResult: null,
 
-    // Get code from Monaco editor
-    getCode: () => get().editor?.getValue() || "",
-
-    // Set editor instance & load saved code
-    setEditor: (editor: Monaco) => {
+    setEditor: (editor: monaco.editor.IStandaloneCodeEditor) => {
       if (!editor) return;
 
       const currentLanguage = get().language;
       const savedCode = localStorage.getItem(`editor-code-${currentLanguage}`);
-
-      // Load saved code only if it exists
       if (savedCode !== null) {
         editor.setValue(savedCode);
       }
@@ -46,24 +39,20 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
       set({ editor });
     },
 
-    // Update theme and save to localStorage
+    getCode: () => get().editor?.getValue() || "",
+
     setTheme: (theme: string) => {
       localStorage.setItem("editor-theme", theme);
       set({ theme });
     },
 
-    // Update font size and save to localStorage
     setFontSize: (fontSize: number) => {
       localStorage.setItem("editor-font-size", fontSize.toString());
       set({ fontSize });
     },
 
-    // Update language, save code for the current language before switching
     setLanguage: (language: string) => {
       const currentCode = get().editor?.getValue();
-
-      console.log(get().editor)
-      // Save current code only if the editor is initialized
       if (currentCode !== undefined && currentCode !== null) {
         localStorage.setItem(`editor-code-${get().language}`, currentCode);
       }
@@ -77,8 +66,6 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
       });
     },
 
-
-    // Function to execute code via Piston API
     runCode: async () => {
       const { language, getCode } = get();
       const code = getCode();
@@ -86,19 +73,19 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
         set({ error: "Please enter some code \nIf the problem persists, please reload the page." });
         return;
       }
-    
+
       const languageConfig = LANGUAGE_CONFIG[language];
       if (!languageConfig) {
         set({ error: "Invalid language selected" });
         return;
       }
-    
+
       set({ isRunning: true, error: null, output: "" });
-    
+
       try {
         const runtime = languageConfig.pistonRuntime;
         if (!runtime) throw new Error("Runtime not available");
-    
+
         const response = await fetch("https://emkc.org/api/v2/piston/execute", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -108,47 +95,47 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
             files: [{ content: code }],
           }),
         });
-    
+
         const data = await response.json();
-        console.log("Data : ", data);
-    
-        // Handle API errors
+        console.log("Execution result:", data);
+
         if (data.message) {
-          set({ error: data.message, executionResult: { code, output: "", error: data.message } });
+          set({
+            error: data.message,
+            executionResult: { code, output: "", error: data.message },
+          });
           return;
         }
-    
-        // Handle compilation errors only if compile data exists
+
         if (data.compile && data.compile.code !== 0) {
           const error = data.compile.stderr || data.compile.stdout || "Compilation failed";
-          set({ error, executionResult: { code, output: "", error } });
+          set({
+            error,
+            executionResult: { code, output: "", error },
+          });
           return;
         }
-    
-        // Handle runtime errors
+
         if (!data.run || data.run.code !== 0) {
-          const error = data.run?.stderr || data.run?.stdout || "Unknown error occurred";
-          set({ error, executionResult: { code, output: "", error } });
+          const error = data.run?.stderr || data.run?.stdout || "Unknown runtime error";
+          set({
+            error,
+            executionResult: { code, output: "", error },
+          });
           return;
         }
-    
-        // Successful execution
+
         set({
           output: data.run.stdout.trim(),
           error: null,
           executionResult: { code, output: data.run.stdout.trim(), error: null },
         });
-    
-      } catch (error) {
-        console.error("Error running code:", error);
-        const existingError = get().executionResult?.error;
+      } catch (err) {
+        const fallbackError = "Unexpected error occurred while running code.";
+        console.error("Error:", err);
         set({
-          error: existingError || "Unexpected error occurred while running code",
-          executionResult: {
-            code,
-            output: "",
-            error: existingError || "Unexpected error occurred while running code",
-          },
+          error: fallbackError,
+          executionResult: { code, output: "", error: fallbackError },
         });
       } finally {
         set({ isRunning: false });
@@ -157,5 +144,5 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
   };
 });
 
-// Function to get the latest execution result (useful for other components)
+// Optional helper to get latest result
 export const getExecutionResult = () => useCodeEditorStore.getState().executionResult;

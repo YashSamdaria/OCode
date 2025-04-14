@@ -2,14 +2,13 @@ import EditorPanel from "./_components/EditorPanel";
 import Header from "./_components/Header";
 import OutputPanel from "./_components/OutputPanel";
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
-  // console.log("Hello ")
   return (
     <div className="min-h-screen">
-      <div className="max-w-[1800px] mb-3">
-        <div >
-        <Header/>
-        </div>
+      <div className="max-w-[1800px] mx-auto mb-3 px-4">
+        <Header />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <EditorPanel />
           <OutputPanel />
@@ -18,7 +17,3 @@ export default function Home() {
     </div>
   );
 }
-
-// export default function Home() {
-//   return <h1 style={{ color: "white" }}>Hello, Next.js!</h1>;
-// }

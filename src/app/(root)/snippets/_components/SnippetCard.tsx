@@ -12,6 +12,8 @@ import toast from "react-hot-toast";
 import StarButton from "@/components/StarButton";
 import { api } from "../../../../../convex/_generated/api";
 
+export const dynamic = "force-dynamic";
+
 function SnippetCard({ snippet }: { snippet: Snippet }) {
   const { user } = useUser();
   const deleteSnippet = useMutation(api.snippets.deleteSnippet);

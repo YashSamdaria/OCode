@@ -12,6 +12,8 @@ import useMounted from "@/hooks/useMounted";
 import RunButton from "./RunButton";
 import ShareSnippetDialog from "./ShareSnippetDialog";
 
+export const dynamic = "force-dynamic";
+
 function EditorPanel() {
   const clerk = useClerk();
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -118,7 +120,7 @@ function EditorPanel() {
               onChange={handleEditorChange}
               theme={theme}
               beforeMount={defineMonacoThemes}
-              onMount={(editor, monaco) => {
+              onMount={(editor) => {
                 console.log("Editor mounted:", editor); // Debugging
                 setEditor(editor);
               }}

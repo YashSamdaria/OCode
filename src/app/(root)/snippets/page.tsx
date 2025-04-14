@@ -10,6 +10,8 @@ import SnippetCard from "./_components/SnippetCard";
 import { api } from "../../../../convex/_generated/api";
 import SnippetsPageSkeleton from "./_components/SnippetsPageSkeleton";
 
+export const dynamic = "force-dynamic";
+
 function SnippetsPage() {
   const snippets = useQuery(api.snippets.getSnippets);
   const [searchQuery, setSearchQuery] = useState("");

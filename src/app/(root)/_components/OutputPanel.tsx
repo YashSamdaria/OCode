@@ -5,6 +5,8 @@ import { AlertTriangle, CheckCircle, Clock, Copy, Terminal } from "lucide-react"
 import { useState } from "react";
 import RunningCodeSkeleton from "./RunningCodeSkeleton";
 
+export const dynamic = "force-dynamic";
+
 function OutputPanel() {
   const { output, error, isRunning } = useCodeEditorStore();
   const [isCopied, setIsCopied] = useState(false);

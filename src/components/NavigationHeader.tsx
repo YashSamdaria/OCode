@@ -3,6 +3,7 @@ import { SignedOut } from "@clerk/nextjs";
 import { Blocks, Sparkles } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic"; 
 function NavigationHeader() {
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-lg">
@@ -34,7 +35,7 @@ function NavigationHeader() {
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <span className="text-lg font-bold relative z-10 group-hover:text-white transition-colors">{`{`}</span>
             <span className="text-sm font-medium relative z-10 group-hover:text-white transition-colors">
-              Let's Code
+            Let&apos;s Code
             </span>
             <span className="text-lg font-bold relative z-10 group-hover:text-white transition-colors">{`}`}</span>
           </Link>
